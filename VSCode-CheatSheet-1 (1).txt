@@ -1,0 +1,5 @@
+1. Install GitHub copilot chat under extensions marketplace
+2. Open terminal : new terminal
+3. git clone https://github.com/your-org/company-management-system.git cd company-management-system
+4. type in ps: New-Item -ItemType Directory -Force - Path .github\agents, .vscode
+5. Under .GitHub create md file copilot-instructions.md with: # Global Copilot Instructions
