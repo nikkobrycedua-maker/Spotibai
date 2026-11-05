@@ -1,0 +1,1187 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wireframes</title>
+  <style>
+    :root {
+      --bg: #f2f2f2;
+      --panel: #ffffff;
+      --panel-alt: #eeeeee;
+      --stroke: #cccccc;
+      --ink: #222222;
+      --muted: #666666;
+      --accent: #666666;
+      --accent-soft: #e5e5e5;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: #f4f4f4;
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .page {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .board {
+      width: 100%;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .tab {
+      border: 1px solid var(--stroke);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      height: 40px;
+      padding: 0 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .tab:hover,
+    .tab:focus-visible {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: white;
+    }
+
+    .canvas {
+      width: 100%;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      min-height: 620px;
+      border: 2px solid #999999;
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+    }
+
+    .placeholder {
+      border-radius: 10px;
+      background: #eeeeee;
+      border: 1px solid var(--stroke);
+    }
+
+    .bar {
+      height: 12px;
+      border-radius: 999px;
+      background: #d8d8d8;
+    }
+
+    .bar.sm { width: 42%; }
+    .bar.md { width: 68%; }
+    .bar.lg { width: 92%; }
+    .bar.xl { width: 100%; }
+
+    .home-screen {
+      padding: 24px 32px 28px;
+      display: grid;
+      align-content: start;
+      gap: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 58px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .brand-name {
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: #bdbdbd;
+      border: 1px solid #999999;
+    }
+
+    .navs {
+      display: flex;
+      gap: 12px;
+    }
+
+    .navs .placeholder {
+      width: auto;
+      height: auto;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 7px 10px;
+    }
+
+    .cta {
+      width: 94px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      color: var(--ink);
+      font-size: 0.86rem;
+      font-weight: 700;
+      white-space: nowrap;
+      border-radius: 10px;
+      background: #e5e5e5;
+      border: 1px solid var(--stroke);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      padding: 12px 0 0;
+    }
+
+    .hero-copy {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      min-height: 300px;
+    }
+
+    .label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .hero h1 {
+      max-width: 600px;
+      margin: 0;
+      font-size: clamp(2.25rem, 4vw, 4rem);
+      line-height: 1.08;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-copy > p {
+      max-width: 500px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .headline {
+      width: min(100%, 520px);
+      height: 56px;
+      border-radius: 14px;
+      background: #e5e5e5;
+      border: 1px solid var(--stroke);
+    }
+
+    .copy-block {
+      display: grid;
+      gap: 8px;
+      width: min(100%, 430px);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .hero-actions .cta {
+      width: 110px;
+      height: 38px;
+    }
+
+    .hero-actions .cta.alt {
+      background: transparent;
+    }
+
+    .hero-visual {
+      min-height: 300px;
+      border-radius: 18px;
+      background: #f1f1f1;
+      border: 1px solid var(--stroke);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-window {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px dashed var(--stroke);
+      padding-bottom: 10px;
+    }
+
+    .mini-window .bar {
+      width: auto;
+      height: auto;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #bdbdbd;
+    }
+
+    .hero-graphic {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .chart-box {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #eaeaea;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-label {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .chart-box::after {
+      content: "";
+      position: absolute;
+      left: 12px; right: 14px; bottom: 18px;
+      height: 42%;
+      border-radius: 50% 40% 0 0 / 100% 100% 0 0;
+      border-bottom: 3px solid #999999;
+      transform: skewY(-9deg);
+    }
+
+    .stats-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stats-stack .placeholder {
+      min-height: 72px;
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+    }
+
+    .stats-stack strong {
+      color: var(--ink);
+      font-size: 1.05rem;
+    }
+
+    .stats-stack .bar {
+      width: auto;
+      height: auto;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 0;
+      padding-top: 22px;
+      border-top: 1px solid var(--stroke);
+    }
+
+    .feature-card {
+      min-height: 126px;
+      border-radius: 12px;
+      background: #eeeeee;
+      border: 1px solid var(--stroke);
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+    }
+
+    .feature-card strong {
+      font-size: 0.95rem;
+    }
+
+    .feature-card span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .login-screen {
+      --login-accent: #777777;
+      position: relative;
+      display: grid;
+      grid-template-columns: 35% 65%;
+      min-height: 700px;
+      overflow: hidden;
+      border: 2px solid #999999;
+      border-radius: 20px;
+      background: #ffffff;
+      color: #222222;
+    }
+
+    .login-brand {
+      position: absolute;
+      z-index: 3;
+      top: 24px;
+      left: 28px;
+      color: #222222;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .login-welcome {
+      position: relative;
+      order: 1;
+      min-width: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      padding: 110px 34px 50px;
+      overflow: hidden;
+      background: #e5e5e5;
+      color: #222222;
+      text-align: center;
+    }
+
+    .login-welcome::before,
+    .login-welcome::after {
+      position: absolute;
+      width: 92px;
+      height: 92px;
+      background: #d0d0d0;
+      content: "";
+      transform: rotate(45deg);
+    }
+
+    .login-welcome::before {
+      top: 80px;
+      right: 22%;
+    }
+
+    .login-welcome::after {
+      bottom: 60px;
+      left: 12%;
+      width: 52px;
+      height: 52px;
+    }
+
+    .welcome-copy {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+
+    .welcome-copy[hidden],
+    .login-form[hidden] {
+      display: none !important;
+    }
+
+    .welcome-copy h2 {
+      margin: 0 0 24px;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .welcome-copy p {
+      margin: 0 auto 34px;
+      color: #555555;
+      font-size: clamp(0.95rem, 1.7vw, 1.35rem);
+      line-height: 1.5;
+    }
+
+    .welcome-cta {
+      min-width: min(220px, 100%);
+      min-height: 56px;
+      padding: 12px 24px;
+      border: 2px solid #777777;
+      border-radius: 999px;
+      background: transparent;
+      color: #333333;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .login-form-panel {
+      order: 2;
+      min-width: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      padding: 70px clamp(24px, 6vw, 90px) 48px;
+      background: #ffffff;
+    }
+
+    .login-form {
+      width: min(100%, 570px);
+      display: grid;
+      gap: 12px;
+    }
+
+    .login-form[hidden] {
+      display: none;
+    }
+
+    .login-form h2 {
+      margin: 0 0 2px;
+      color: #222222;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .login-subtitle {
+      margin: 0 0 18px;
+      color: #666666;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .login-field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 4px;
+    }
+
+    .login-field strong {
+      color: #333333;
+      font-size: 0.88rem;
+    }
+
+    .login-input {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border: 1px solid #bbbbbb;
+      border-radius: 9px;
+      background: #f1f1f1;
+      color: #666666;
+      font-size: 0.92rem;
+    }
+
+    .input-symbol {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1.5px solid #999999;
+      border-radius: 4px;
+      color: #777777;
+      font-size: 0.66rem;
+    }
+
+    .signin-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 0 10px;
+      color: #666666;
+      font-size: 0.82rem;
+    }
+
+    .signin-options a {
+      color: var(--login-accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .signin-options label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .signin-options input {
+      width: 17px;
+      height: 17px;
+      margin: 0;
+      accent-color: var(--login-accent);
+    }
+
+    .submit-box {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #dddddd;
+      color: #222222;
+      font-weight: 800;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0;
+      color: #666666;
+      font-size: 0.78rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      height: 1px;
+      flex: 1;
+      background: #cccccc;
+      content: "";
+    }
+
+    .social-buttons {
+      display: flex;
+      justify-content: center;
+    }
+
+    .social-button {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #bbbbbb;
+      border-radius: 50%;
+      color: #555555;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .signup-form .login-field {
+      margin-bottom: 0;
+    }
+
+    .password-rules {
+      display: grid;
+      gap: 4px;
+      margin: -3px 0 0;
+      padding: 0;
+      color: #777777;
+      font-size: 0.72rem;
+      list-style: none;
+    }
+
+    .login-screen.signup-mode {
+      grid-template-columns: 65% 35%;
+    }
+
+    .login-screen.signup-mode .login-welcome {
+      order: 2;
+    }
+
+    .login-screen.signup-mode .login-form-panel {
+      order: 1;
+    }
+
+    .signup-form h2 {
+      font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+    }
+
+    .dashboard-screen {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 620px;
+    }
+
+    .sidebar {
+      background: #eeeeee;
+      border-right: 1px solid var(--stroke);
+      padding: 18px 14px 14px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+    }
+
+    .sidebar .brand {
+      font-size: 0.96rem;
+      padding: 6px;
+    }
+
+    .nav-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .nav-stack .placeholder {
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .nav-stack .placeholder.active {
+      color: var(--ink);
+      background: #dddddd;
+      border-color: #999999;
+    }
+
+    .user-pill {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #e5e5e5;
+      border: 1px solid var(--stroke);
+      margin-top: auto;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #d0d0d0;
+      border: 1px solid var(--stroke);
+    }
+
+    .user-pill span {
+      display: grid;
+      gap: 2px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .user-pill small {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    .main-panel {
+      padding: 18px 18px 20px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--stroke);
+    }
+
+    .top-row .bar {
+      width: auto;
+      height: auto;
+      background: transparent;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-row .placeholder {
+      width: auto;
+      height: 34px;
+      border-radius: 10px;
+      padding: 0 12px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      min-height: 112px;
+      border-radius: 12px;
+      background: #eeeeee;
+      border: 1px solid var(--stroke);
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+    }
+
+    .stat-card .bar { width: 48%; }
+    .stat-card .bar {
+      width: auto;
+      height: auto;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .stat-card strong {
+      font-size: 1.25rem;
+    }
+
+    .stat-card small {
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .content-card {
+      min-height: 150px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #f1f1f1;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+
+    .content-card.large {
+      min-height: 220px;
+    }
+
+    .card-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .card-heading span {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 500;
+    }
+
+    .table-head,
+    .table-row {
+      display: grid;
+      grid-template-columns: 1.1fr 1.2fr 0.8fr;
+      align-items: center;
+      gap: 10px;
+      min-height: 34px;
+      border-bottom: 1px solid #dddddd;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .table-head {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .quick-action {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .quick-action i {
+      width: 25px;
+      height: 25px;
+      border-radius: 7px;
+      background: #e0e0e0;
+      border: 1px solid var(--stroke);
+    }
+
+    .login-foot {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.84rem;
+    }
+
+    .login-foot strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 760px) {
+      .hero,
+      .login-screen,
+      .dashboard-screen,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .features,
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--stroke);
+        grid-template-rows: auto auto auto;
+      }
+
+      .login-screen,
+      .login-screen.signup-mode {
+        grid-template-columns: 1fr;
+      }
+
+      .login-screen.signup-mode .login-welcome,
+      .login-screen.signup-mode .login-form-panel {
+        order: initial;
+      }
+
+      .login-welcome {
+        min-height: 270px;
+        padding: 86px 28px 32px;
+      }
+
+      .login-form-panel {
+        min-height: 540px;
+        padding: 34px 24px;
+      }
+
+      .nav-stack {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .home-screen {
+        padding: 18px;
+      }
+
+      .brand {
+        font-size: 0.82rem;
+      }
+
+      .topbar {
+        flex-wrap: wrap;
+      }
+
+      .navs {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="board">
+      <div class="tabs" role="tablist" aria-label="Wireframe sections">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="panel-home" id="tab-home" tabindex="0">Home</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="panel-login" id="tab-login" tabindex="-1">Login</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="panel-dashboard" id="tab-dashboard" tabindex="-1">Dashboard</button>
+      </div>
+
+      <section id="panel-home" class="sketch" role="tabpanel" aria-labelledby="tab-home">
+        <div class="canvas">
+          <div class="screen home-screen">
+            <div class="topbar">
+              <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">Hope, Inc. ERP</span>
+              </div>
+              <div class="navs">
+                <span class="placeholder">Platform</span>
+              </div>
+              <span class="cta alt">Sign In</span>
+              <span class="cta">Register</span>
+            </div>
+
+            <div class="hero">
+              <div class="hero-copy">
+                <div class="label">One connected workspace</div>
+                <h1>Run your business with confidence.</h1>
+                <p>Bring customers, products, people, and sales together in one clear, easy-to-use system.</p>
+                <div class="hero-actions">
+                  <span class="cta">Get started</span>
+                  <span class="cta alt">Explore platform</span>
+                </div>
+              </div>
+
+              <div class="hero-visual">
+                <div class="mini-window">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="bar sm" style="margin-left: 8px;">Business overview</span>
+                </div>
+                <div class="hero-graphic">
+                  <div class="chart-box"><span class="chart-label">Sales this month</span></div>
+                  <div class="stats-stack">
+                    <div class="placeholder"><span class="bar sm">Customers</span><strong>00 active</strong></div>
+                    <div class="placeholder"><span class="bar sm">Products</span><strong>00 listed</strong></div>
+                    <div class="placeholder"><span class="bar sm">Team members</span><strong>00 active</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="features">
+              <div class="feature-card"><strong>Customers</strong><span>Keep customer information organized and easy to find.</span></div>
+              <div class="feature-card"><strong>Products</strong><span>Maintain your catalog and manage current pricing.</span></div>
+              <div class="feature-card"><strong>Human Resources</strong><span>Organize employee, department, and role information.</span></div>
+              <div class="feature-card"><strong>Sales</strong><span>Track transactions and the records behind them.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-login" class="sketch" role="tabpanel" aria-labelledby="tab-login" hidden>
+        <div class="canvas">
+          <div class="screen login-screen">
+            <a class="login-brand">Hope, Inc. ERP</a>
+            <aside class="login-welcome">
+              <div class="welcome-copy welcome-signin">
+                <h2>New Here?</h2>
+                <p>Join Hope, Inc. ERP and manage your business in one place.</p>
+                <button class="welcome-cta" type="button" data-auth-mode="signup">Sign Up</button>
+              </div>
+              <div class="welcome-copy welcome-signup" hidden>
+                <h2>One Of Us?</h2>
+                <p>If you already have an account, sign in to continue.</p>
+                <button class="welcome-cta" type="button" data-auth-mode="signin">Sign In</button>
+              </div>
+            </aside>
+
+            <div class="login-form-panel">
+              <section class="login-form signin-form">
+                <h2>Welcome back</h2>
+                <p class="login-subtitle">Sign in to your Hope, Inc. ERP account</p>
+
+                <label class="login-field">
+                  <strong>Email</strong>
+                  <span class="login-input"><i class="input-symbol">@</i>you@example.com</span>
+                </label>
+
+                <label class="login-field">
+                  <strong>Password</strong>
+                  <span class="login-input"><i class="input-symbol">●</i>Your password</span>
+                </label>
+
+                <div class="signin-options">
+                  <label><input type="checkbox" /> Remember me</label>
+                  <a>Forgot password?</a>
+                </div>
+
+                <div class="submit-box">Sign In</div>
+                <div class="divider">Or</div>
+                <div class="social-buttons"><span class="social-button" aria-label="Continue with Google">G</span></div>
+              </section>
+
+              <section class="login-form signup-form" hidden>
+                <h2>Create your account</h2>
+                <p class="login-subtitle">Join Hope, Inc. ERP</p>
+
+                <label class="login-field">
+                  <strong>Name</strong>
+                  <span class="login-input"><i class="input-symbol">●</i>Your name</span>
+                </label>
+                <label class="login-field">
+                  <strong>Email</strong>
+                  <span class="login-input"><i class="input-symbol">@</i>you@example.com</span>
+                </label>
+                <label class="login-field">
+                  <strong>Password</strong>
+                  <span class="login-input"><i class="input-symbol">●</i>Create a password</span>
+                </label>
+                <ul class="password-rules">
+                  <li>At least 8 characters</li>
+                  <li>At least one number or symbol</li>
+                  <li>Lowercase and uppercase letters</li>
+                </ul>
+                <label class="login-field">
+                  <strong>Re-Type Password</strong>
+                  <span class="login-input"><i class="input-symbol">●</i>Re-type your password</span>
+                </label>
+
+                <div class="submit-box">Sign Up</div>
+                <div class="divider">Or</div>
+                <div class="social-buttons"><span class="social-button" aria-label="Continue with Google">G</span></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-dashboard" class="sketch" role="tabpanel" aria-labelledby="tab-dashboard" hidden>
+        <div class="canvas">
+          <div class="screen dashboard-screen">
+            <aside class="sidebar">
+              <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">Hope, Inc. ERP</span>
+              </div>
+              <div class="nav-stack">
+                <div class="placeholder active">Overview</div>
+                <div class="placeholder">Customers</div>
+                <div class="placeholder">Products</div>
+                <div class="placeholder">Human Resources</div>
+                <div class="placeholder">Sales</div>
+                <div class="placeholder">Reports</div>
+                <div class="placeholder">User Management</div>
+              </div>
+              <div class="user-pill"><i class="avatar"></i><span>Account owner<small>Superadmin</small></span></div>
+            </aside>
+
+            <main class="main-panel">
+              <div class="top-row">
+                <div class="bar">Dashboard overview</div>
+                <div class="action-row">
+                  <div class="placeholder">Notifications</div>
+                  <div class="placeholder">Account</div>
+                </div>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card"><span class="bar">Total Customers</span><strong>00</strong><small>Active customer records</small></div>
+                <div class="stat-card"><span class="bar">Total Products</span><strong>00</strong><small>Active catalog items</small></div>
+                <div class="stat-card"><span class="bar">Total Employees</span><strong>00</strong><small>Current employees</small></div>
+                <div class="stat-card"><span class="bar">Total Sales</span><strong>$0.00</strong><small>Sales with line items</small></div>
+              </div>
+
+              <div class="content-grid">
+                <section class="content-card large">
+                  <div class="card-heading">Recent activity <span>View all</span></div>
+                  <div class="table-head"><span>Activity</span><span>Record</span><span>Date</span></div>
+                  <div class="table-row"><span>Updated customer</span><span>Customer name</span><span>Today</span></div>
+                  <div class="table-row"><span>Added product</span><span>Product name</span><span>Yesterday</span></div>
+                  <div class="table-row"><span>Recorded sale</span><span>Transaction no.</span><span>Yesterday</span></div>
+                </section>
+                <section class="content-card">
+                  <div class="card-heading">Quick actions</div>
+                  <div class="quick-action"><i></i>Add customer</div>
+                  <div class="quick-action"><i></i>Add product</div>
+                  <div class="quick-action"><i></i>New sale</div>
+                  <div class="quick-action"><i></i>New employee</div>
+                </section>
+              </div>
+            </main>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    function selectTab(targetTab) {
+      tabs.forEach((tab) => {
+        const active = tab === targetTab;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.id === targetTab.getAttribute('aria-controls');
+        panel.hidden = !isActive;
+      });
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+
+        let nextIndex = index;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = tabs.length - 1;
+
+        tabs[nextIndex].focus();
+        selectTab(tabs[nextIndex]);
+      });
+    });
+
+    document.querySelectorAll('[data-auth-mode]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const signup = button.dataset.authMode === 'signup';
+        const screen = button.closest('.login-screen');
+        screen.classList.toggle('signup-mode', signup);
+        screen.querySelector('.signin-form').hidden = signup;
+        screen.querySelector('.signup-form').hidden = !signup;
+        screen.querySelector('.welcome-signin').hidden = signup;
+        screen.querySelector('.welcome-signup').hidden = !signup;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hope, Inc. ERP — Enterprise Resource Planning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ==================== LANDING PAGE ==================== -->
+  <div id="landing">
+    <nav class="navbar" aria-label="Main navigation">
+      <a href="#top" class="logo">
+        <span class="brand-mark" aria-hidden="true">H</span>
+        Hope, Inc. ERP
+      </a>
+      <div class="landing-links">
+        <a href="#modules">Platform</a>
+      </div>
+      <div class="nav-actions">
+        <a class="btn btn-ghost" href="../Login/Login.html?mode=signin">Sign In</a>
+        <a class="btn btn-primary" href="../Login/Login.html?mode=signup">Register</a>
+      </div>
+    </nav>
+
+    <main class="landing-main">
+      <section class="hero simple-hero" id="top" aria-labelledby="heroTitle">
+        <div class="hero-content simple-hero-copy">
+          <div class="hero-kicker"><span class="status-dot"></span> ONE CONNECTED WORKSPACE</div>
+          <h1 id="heroTitle">Run your business<br><span>with confidence.</span></h1>
+          <p>Bring customers, products, people, and sales together in one clear, easy-to-use system.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="../Login/Login.html?mode=signup">Get started</a>
+            <a class="btn btn-outline" href="#modules">Explore the platform</a>
+          </div>
+          <p class="hero-footnote">The essentials your team needs, all in one place.</p>
+        </div>
+
+        <div class="preview-dashboard" aria-label="Dashboard overview preview. The cards highlight on hover and are for display only.">
+          <div class="preview-window-bar">
+            <div class="preview-window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span class="preview-window-title"><span class="preview-brand-mark" aria-hidden="true">H</span> Hope, Inc. ERP Dashboard</span>
+          </div>
+          <div class="preview-dashboard-content">
+            <div class="preview-overview-heading">
+              <div><span>WORKSPACE / OPERATIONS</span><h2>Business at a glance.</h2></div>
+              <span class="preview-overview-date">TODAY&nbsp; · &nbsp;OVERVIEW</span>
+            </div>
+            <div class="preview-overview-grid">
+              <div class="preview-stat preview-sales-stat">
+                <div class="preview-sales-heading">
+                  <span class="preview-stat-icon" aria-hidden="true">↗</span>
+                  <span><small>Sales this month</small><strong>$884.50</strong></span>
+                  <em>+12.8%</em>
+                </div>
+                <div class="preview-chart" aria-label="Illustrative sales activity chart">
+                  <div class="preview-chart-labels" aria-hidden="true"><span>$1k</span><span>$500</span><span>$0</span></div>
+                  <svg viewBox="0 0 300 92" role="img" aria-label="Sales activity generally rising through the month">
+                    <defs>
+                      <linearGradient id="previewChartFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#35df9a" stop-opacity=".3" />
+                        <stop offset="100%" stop-color="#35df9a" stop-opacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path class="preview-chart-area" d="M0 72 C22 66 27 70 46 58 S77 63 94 48 S123 54 143 40 S174 51 191 32 S225 42 242 23 S274 30 300 8 V92 H0 Z" />
+                    <path class="preview-chart-line" d="M0 72 C22 66 27 70 46 58 S77 63 94 48 S123 54 143 40 S174 51 191 32 S225 42 242 23 S274 30 300 8" />
+                    <circle cx="300" cy="8" r="4" />
+                  </svg>
+                  <div class="preview-chart-months" aria-hidden="true"><span>WEEK 1</span><span>WEEK 2</span><span>WEEK 3</span><span>WEEK 4</span></div>
+                </div>
+              </div>
+              <div class="preview-overview-list">
+                <div class="preview-stat preview-customer-stat">
+                  <span class="preview-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="10" cy="7" r="4"></circle><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  </span>
+                  <span><small>Customers</small><strong>04</strong></span><em>ACTIVE</em>
+                </div>
+                <div class="preview-stat preview-product-stat">
+                  <span class="preview-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"></path></svg>
+                  </span>
+                  <span><small>Products</small><strong>04</strong></span><em>IN CATALOG</em>
+                </div>
+                <div class="preview-stat preview-people-stat">
+                  <span class="preview-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="7" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0M19 8a3 3 0 0 1 0 6"></path></svg>
+                  </span>
+                  <span><small>Team members</small><strong>03</strong></span><em>ON TEAM</em>
+                </div>
+              </div>
+            </div>
+            <div class="preview-dashboard-footer">
+              <span><i></i> One clear view of your business</span>
+              <span>HOPE ERP&nbsp; · &nbsp;OVERVIEW</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="simple-modules" id="modules" aria-labelledby="modulesTitle">
+        <div class="simple-section-heading">
+          <span class="simple-section-eyebrow">MADE FOR THE WAY YOU WORK</span>
+          <h2 id="modulesTitle">The tools to keep work moving.</h2>
+          <p>Manage everyday operations with modules that work better together.</p>
+        </div>
+        <div class="simple-feature-grid">
+          <article class="simple-feature-card">
+            <span class="feature-number">01</span>
+            <span class="simple-feature-icon customers-icon" aria-hidden="true">C</span>
+            <h3>Customer Management</h3>
+            <p>Keep customer information organized and make important records easy to find.</p>
+          </article>
+          <article class="simple-feature-card">
+            <span class="feature-number">02</span>
+            <span class="simple-feature-icon products-icon" aria-hidden="true">P</span>
+            <h3>Product Management</h3>
+            <p>Maintain your product catalog and keep pricing details up to date.</p>
+          </article>
+          <article class="simple-feature-card">
+            <span class="feature-number">03</span>
+            <span class="simple-feature-icon people-icon" aria-hidden="true">H</span>
+            <h3>Human Resources</h3>
+            <p>Organize employee, department, and role information in one place.</p>
+          </article>
+          <article class="simple-feature-card">
+            <span class="feature-number">04</span>
+            <span class="simple-feature-icon sales-icon" aria-hidden="true">S</span>
+            <h3>Sales Management</h3>
+            <p>Track transactions and the products and customers behind them.</p>
+          </article>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="landing-footer"><span>© 2026 Hope, Inc. ERP</span></footer>
+  </div>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      if (mode !== 'signin' && mode !== 'signup') return;
+      const loginUrl = new URL('../Login/Login.html', window.location.href);
+      loginUrl.searchParams.set('mode', mode);
+      window.location.replace(loginUrl.href);
+    })();
+  </script>
+</body>
+</html>
