@@ -1599,16 +1599,19 @@ body.dashboard-page .profile-image-stack {
   position: relative;
   display: grid;
   place-items: center;
+  width: 180px;
+  flex: 0 0 180px;
   padding-top: 10px;
 }
 body.dashboard-page .profile-avatar-edit {
   position: absolute;
   top: 10px;
-  left: 0;
+  left: 50%;
   display: grid;
   place-items: center;
   width: 136px;
   height: 136px;
+  transform: translateX(-50%);
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -1630,6 +1633,29 @@ body.dashboard-page .profile-avatar-edit svg {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+body.dashboard-page .profile-avatar-remove {
+  width: max-content;
+  justify-self: center;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgb(153 196 175 / 24%);
+  border-radius: 9px;
+  background: transparent;
+  color: #b7cfc4;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+body.dashboard-page .profile-avatar-remove:hover:not(:disabled),
+body.dashboard-page .profile-avatar-remove:focus-visible {
+  border-color: rgb(0 217 155 / 58%);
+  color: #dffef4;
+}
+body.dashboard-page .profile-avatar-remove:disabled {
+  opacity: .48;
+  cursor: not-allowed;
 }
 body.dashboard-page .avatar-crop-overlay {
   z-index: 1300;
@@ -1749,6 +1775,49 @@ body.dashboard-page .avatar-crop-footer .btn {
   }
   body.dashboard-page .avatar-crop-overlay {
     padding: 12px;
+  }
+  body.dashboard-page #profileModal .modal {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+  body.dashboard-page #profileModal .profile-panel-header {
+    padding: 16px 16px 12px;
+  }
+  body.dashboard-page #profileModal .modal-body {
+    padding: 0 16px 14px;
+  }
+  body.dashboard-page .profile-panel-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding-top: 14px;
+  }
+  body.dashboard-page .profile-image-stack {
+    width: 100%;
+    flex: 0 0 auto;
+    padding-top: 4px;
+  }
+  body.dashboard-page .profile-avatar-edit {
+    top: 4px;
+  }
+  body.dashboard-page .profile-avatar-remove {
+    width: max-content;
+    max-width: 100%;
+  }
+  body.dashboard-page .profile-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.dashboard-page .profile-panel-footer {
+    flex-wrap: wrap;
+    padding: 14px 16px 16px;
+  }
+  body.dashboard-page .profile-panel-footer .alert {
+    flex-basis: 100%;
+    margin: 0;
+  }
+  body.dashboard-page .profile-panel-footer .profile-cancel-btn,
+  body.dashboard-page .profile-panel-footer .profile-save-btn {
+    flex: 1 1 120px;
   }
 }
 body.dashboard-page .profile-form-area {

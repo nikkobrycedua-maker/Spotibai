@@ -496,6 +496,10 @@
       gap: 12px;
     }
 
+    .signup-panel [hidden] {
+      display: none !important;
+    }
+
     .field label {
       display: block;
       margin-bottom: clamp(5px, 0.6vh, 7px);

@@ -80,8 +80,12 @@ The
 migration adds the existing `profiles`, ERP, and `audit_log` tables to the
 `supabase_realtime` publication when not already present. It does not change
 table definitions or RLS policies; row visibility continues to be governed by
-the existing policies. Apply it in the target Supabase project for live updates
-to work.
+the existing policies. The
+[`20261105000000_protect_superadmin_accounts.sql`](./supabase/migrations/20261105000000_protect_superadmin_accounts.sql)
+migration makes all profile-management RPCs reject changes to existing Super
+Admin accounts, serializes actor/target checks, and reapplies profile column
+grants and self-only update policies. Apply it after the earlier migrations in
+the target Supabase project.
 
 ### Provision the first Super Admin
 

@@ -96,6 +96,7 @@ Run these scripts once, from the Supabase SQL Editor, in this order:
 4. `supabase/migrations/20261104001000_google_profile_name_sync.sql` — synchronize available Google name metadata without changing account roles or status.
 5. `supabase/migrations/20261104002000_payment_report_permission.sql` — allowlist the `reports.payment` permission.
 6. `supabase/migrations/20261104003000_realtime_publication.sql` — add the existing profiles, ERP, and audit tables to Supabase Realtime's publication.
+7. `supabase/migrations/20261105000000_protect_superadmin_accounts.sql` — protect Super Admin profiles in management RPCs and reassert profile update grants and policies.
 
 These are complete source copies embedded below and retained separately as `.sql` files. The safe setup script creates the original business seed records exactly once. **Do not also execute `Experimental/Hope ERP/HopeDB_audit.sql.txt` or run another seed script.**
 
@@ -107,9 +108,9 @@ The setup source contains no `DROP TABLE`, `DROP SCHEMA`, `DROP FUNCTION`, `DELE
 
 PostgreSQL/Supabase requires an applicable **PERMISSIVE** policy to allow a command. The auth/RLS script installs permissive baseline policies for authenticated users, then applies **RESTRICTIVE** policies to narrow the combined result. For those policies, the permissive grants are OR-combined, while restrictive checks must also pass. Do not remove the restrictive policies or replace them with unrestricted permissive policies to solve an access error.
 
-The `has_permission(text)` function requires an active profile and grants the active `superadmin` role system-wide business-table permission; other users need the exact permission and the parent module's view permission for non-view actions. Admins can manage User accounts only. The profile read policy permits a user to read their own profile, a Super Admin to read profiles, and system admins to read User profiles. `manage_profile` and `review_applicant` validate the caller and target on the database side.
+The `has_permission(text)` function requires an active profile and grants the active `superadmin` role system-wide business-table permission; other users need the exact permission and the parent module's view permission for non-view actions. Admins can manage User accounts only. The profile read policy permits a user to read their own profile, a Super Admin to read profiles, and system admins to read User profiles. The final account-protection migration makes `manage_profile` and `review_applicant` lock and validate the authenticated actor and current target in the transaction; existing Super Admin profiles cannot be managed, and direct profile updates remain self-only and limited to non-authority columns.
 
-### Script 1 of 6 — safe business schema and seed
+### Script 1 of 7 — safe business schema and seed
 
 **Filename:** `supabase/setup/001_initial_schema.sql`
 **Purpose:** Create the 10 HopeDB business tables, primary/foreign keys and CHECK constraints; insert the original seed data once; add audit/soft-delete columns, functions, triggers, and active views.
@@ -1424,7 +1425,7 @@ CREATE TRIGGER audit_log_protect_truncate
 COMMIT;
 ```
 
-### Script 2 of 6 — profiles, permissions, RLS, and avatars
+### Script 2 of 7 — profiles, permissions, RLS, and avatars
 
 **Filename:** `supabase/migrations/20261103235500_auth_profiles_rls.sql`
 **Purpose:** Create linked profiles and Auth triggers; add server-side permission functions; enable and configure RLS on the business tables, profiles, and audit log; configure private avatar Storage. It installs permissive access policies paired with restrictive permission guards.
@@ -2016,7 +2017,7 @@ CREATE POLICY spotibai_avatar_delete_guard ON storage.objects AS RESTRICTIVE
   USING (bucket_id <> 'avatars' OR (auth.uid() IS NOT NULL AND (storage.foldername(name))[1] = auth.uid()::text));
 ```
 
-### Script 3 of 6 — applicant review RPC
+### Script 3 of 7 — applicant review RPC
 
 **Filename:** `supabase/migrations/20261104000000_review_applicants.sql`
 **Purpose:** Add the guarded `review_applicant(uuid,text)` function for active admins to approve or disapprove another pending User account.
@@ -2077,7 +2078,7 @@ REVOKE ALL ON FUNCTION public.review_applicant(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.review_applicant(uuid, text) TO authenticated;
 ```
 
-### Script 4 of 6 — Google profile-name synchronization
+### Script 4 of 7 — Google profile-name synchronization
 
 **Filename:** `supabase/migrations/20261104001000_google_profile_name_sync.sql`
 **Purpose:** Replace the profile trigger function so it can map available Google name metadata, and fill blank names for existing Google-linked User profiles.
@@ -2169,7 +2170,7 @@ WHERE auth_user.id = profile.id
   );
 ```
 
-### Script 5 of 6 — payment-report permission
+### Script 5 of 7 — payment-report permission
 
 **Filename:** `supabase/migrations/20261104002000_payment_report_permission.sql`
 **Purpose:** Add `reports.payment` to the database permission validator's allowlist. It does not create tables or alter RLS.
@@ -2214,7 +2215,7 @@ AS $$
 $$;
 ```
 
-### Script 6 of 6 — Supabase Realtime publication
+### Script 6 of 7 — Supabase Realtime publication
 
 **Filename:** `supabase/migrations/20261104003000_realtime_publication.sql`
 **Purpose:** Add the existing profiles, ERP business, and audit tables to the default `supabase_realtime` publication if they are not already members. This does not alter table definitions or RLS policies.
@@ -2267,6 +2268,161 @@ END;
 $$;
 ```
 
+### Script 7 of 7 — Super Admin account protection
+
+**Filename:** `supabase/migrations/20261105000000_protect_superadmin_accounts.sql`
+**Purpose:** Replace the profile-management and applicant-review RPCs with transaction-serialized actor/target checks. No account-management caller can modify an existing Super Admin profile; Admins remain limited to User profiles. Reassert profile column grants and the active-user self-update policy.
+**Prerequisites:** Scripts 1–6, including `public.profiles`, the permission validator, and existing profile RLS.
+**Expected result:** Super Admin, Admin, and User management calls are authorized against the authenticated profile and locked target row. Direct authenticated updates cannot change roles, status, or permissions, and can update only the caller's permitted profile fields.
+
+```sql
+CREATE OR REPLACE FUNCTION public.manage_profile(
+  target_user_id uuid,
+  new_role text,
+  new_status text,
+  new_permissions jsonb,
+  new_first_name text,
+  new_last_name text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  caller_role text;
+  target_role text;
+BEGIN
+  IF auth.uid() IS NULL OR target_user_id = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot manage your own administrative profile.';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(73640192);
+
+  SELECT role INTO caller_role
+  FROM public.profiles
+  WHERE id = auth.uid() AND account_status = 'active'
+  FOR SHARE;
+
+  SELECT role INTO target_role
+  FROM public.profiles
+  WHERE id = target_user_id
+  FOR UPDATE;
+
+  IF target_role IS NULL THEN
+    RAISE EXCEPTION 'The target profile does not exist.';
+  END IF;
+  IF caller_role IS NULL OR caller_role NOT IN ('superadmin', 'admin') THEN
+    RAISE EXCEPTION 'Only administrators may manage user accounts.';
+  END IF;
+  IF target_role = 'superadmin' THEN
+    RAISE EXCEPTION 'Super Admin accounts cannot be managed by another account.';
+  END IF;
+  IF new_role IS NULL OR new_role NOT IN ('superadmin', 'admin', 'user') THEN
+    RAISE EXCEPTION 'Invalid account role.';
+  END IF;
+  IF new_status IS NULL OR new_status NOT IN ('active', 'pending', 'blocked', 'disapproved') THEN
+    RAISE EXCEPTION 'Invalid account status.';
+  END IF;
+  IF jsonb_typeof(new_permissions) IS DISTINCT FROM 'object' THEN
+    RAISE EXCEPTION 'Permissions must be a JSON object.';
+  END IF;
+  IF length(trim(COALESCE(new_first_name, ''))) = 0
+     OR length(trim(COALESCE(new_first_name, ''))) > 80
+     OR length(trim(COALESCE(new_last_name, ''))) > 80 THEN
+    RAISE EXCEPTION 'First name must be non-empty and names must be no longer than 80 characters.';
+  END IF;
+  IF NOT public.valid_spotibai_permissions(new_permissions) THEN
+    RAISE EXCEPTION 'Permissions contain an unsupported key or a non-boolean value.';
+  END IF;
+
+  IF caller_role = 'admin'
+     AND (target_role <> 'user' OR new_role <> 'user') THEN
+    RAISE EXCEPTION 'Admins may manage User accounts only.';
+  END IF;
+
+  UPDATE public.profiles
+  SET role = new_role,
+      account_status = new_status,
+      permissions = new_permissions,
+      first_name = trim(new_first_name),
+      last_name = trim(COALESCE(new_last_name, ''))
+  WHERE id = target_user_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.review_applicant(
+  target_user_id uuid,
+  new_status text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  caller_role text;
+  target_role text;
+  target_status text;
+BEGIN
+  IF auth.uid() IS NULL OR target_user_id = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot review your own account.';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(73640192);
+
+  SELECT role INTO caller_role
+  FROM public.profiles
+  WHERE id = auth.uid() AND account_status = 'active'
+  FOR SHARE;
+
+  SELECT role, account_status INTO target_role, target_status
+  FROM public.profiles
+  WHERE id = target_user_id
+  FOR UPDATE;
+
+  IF target_role IS NULL THEN
+    RAISE EXCEPTION 'The selected applicant does not exist.';
+  END IF;
+  IF caller_role IS NULL OR caller_role NOT IN ('superadmin', 'admin') THEN
+    RAISE EXCEPTION 'Only active administrators may review applicants.';
+  END IF;
+  IF target_role <> 'user' THEN
+    RAISE EXCEPTION 'Only User accounts may be reviewed as applicants.';
+  END IF;
+  IF target_status <> 'pending' THEN
+    RAISE EXCEPTION 'Only pending applicants may be reviewed.';
+  END IF;
+  IF new_status IS NULL OR new_status NOT IN ('active', 'disapproved') THEN
+    RAISE EXCEPTION 'Applicant status must be active or disapproved.';
+  END IF;
+
+  UPDATE public.profiles
+  SET account_status = new_status
+  WHERE id = target_user_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.manage_profile(uuid, text, text, jsonb, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.manage_profile(uuid, text, text, jsonb, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.review_applicant(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.review_applicant(uuid, text) TO authenticated;
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.profiles FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT UPDATE (first_name, last_name, phone, avatar_path) ON public.profiles TO authenticated;
+
+DROP POLICY IF EXISTS spotibai_profiles_update_access ON public.profiles;
+CREATE POLICY spotibai_profiles_update_access ON public.profiles
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS profiles_update_self ON public.profiles;
+CREATE POLICY profiles_update_self ON public.profiles AS RESTRICTIVE
+  FOR UPDATE TO authenticated
+  USING (id = auth.uid() AND account_status = 'active')
+  WITH CHECK (id = auth.uid() AND account_status = 'active');
+```
+
 ### Optional Supabase Edge Function — invitations
 
 The User Management invitation workflow also uses `supabase/functions/invite-user/index.ts`. This TypeScript Edge Function is included separately; it is not SQL and is therefore not embedded in the SQL blocks above. It validates the caller through Supabase Auth and `profiles`, then uses the Edge Function runtime's service-role client to send an invitation and call `manage_profile`.
@@ -2293,7 +2449,7 @@ The function requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE
 
 ## Part 5 — Create the first Super Admin
 
-Public registration intentionally creates an ordinary `user` with `pending` status. It cannot grant Super Admin privileges. The first Super Admin must be provisioned by a trusted project owner in Supabase's SQL Editor after all six SQL scripts have completed.
+Public registration intentionally creates an ordinary `user` with `pending` status. It cannot grant Super Admin privileges. The first Super Admin must be provisioned by a trusted project owner in Supabase's SQL Editor after all seven SQL scripts have completed.
 
 1. Open the new site's registration form and create the classmate/owner account with an email they control. Complete email confirmation if it is enabled.
 2. In Supabase **Authentication → Users**, confirm the account exists. In SQL Editor, confirm the matching profile exists:
@@ -2340,7 +2496,7 @@ Public registration intentionally creates an ordinary `user` with `pending` stat
 
 6. Sign in with that account. The profile must show `role='superadmin'` and `account_status='active'`.
 
-This SQL is a trusted one-time bootstrap for the new project's owner, not a website feature. Never give SQL Editor access to an ordinary user for self-promotion. There is no Super Admin email or UUID embedded in this manual. After the first owner is active, use the protected User Management flow to administer other accounts. The database prevents an administrator from removing the last active Super Admin through the application function.
+This SQL is a trusted one-time bootstrap for the new project's owner, not a website feature. Never give SQL Editor access to an ordinary user for self-promotion. There is no Super Admin email or UUID embedded in this manual. After the first owner is active, use the protected User Management flow to administer Admin and User accounts. Existing Super Admin profiles cannot be modified through account-management RPCs.
 
 ## Part 6 — Authentication configuration
 

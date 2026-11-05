@@ -701,7 +701,8 @@
               <button type="button" class="profile-avatar-edit" id="profileAvatarButton" aria-label="Change profile picture">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16.5 3.5 4 4M4 20l4.3-.9L19.6 7.8a2.1 2.1 0 0 0-3-3L5.3 16.1 4 20Z"></path></svg>
               </button>
-              <input type="file" id="profileAvatarInput" accept="image/png,image/jpeg,image/webp" hidden />
+              <input type="file" id="profileAvatarInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden />
+              <button type="button" class="profile-avatar-remove" id="profileAvatarRemove" onclick="removeProfilePicture()">Remove Image</button>
             </div>
 
             <div class="profile-form-area">
@@ -1453,9 +1454,14 @@
 
     async function refreshProfileAvatar(client, path) {
       if (!path) return '';
-      const { data, error } = await client.storage.from('avatars').createSignedUrl(path, 3600);
-      if (error) throw error;
-      return data.signedUrl;
+      try {
+        const { data, error } = await client.storage.from('avatars').createSignedUrl(path, 3600);
+        if (error) throw error;
+        return data?.signedUrl || '';
+      } catch (error) {
+        console.error('Unable to access the stored profile picture; showing the default avatar.', error);
+        return '';
+      }
     }
 
     // ========== Current user state ==========
@@ -1689,6 +1695,9 @@
       image.style.width = '100%';
       image.style.height = '100%';
       image.style.objectFit = 'cover';
+      image.addEventListener('error', () => {
+        if (image.parentElement === element) element.replaceChildren(document.createTextNode(fallback));
+      }, { once: true });
       element.replaceChildren(image);
     }
 
@@ -1711,6 +1720,9 @@
       document.getElementById('profileHeaderRole').textContent = roleLabel;
       const firstLetter = ((user.firstName || currentUser.firstName || 'U').charAt(0) || 'U').toUpperCase();
       applyAvatar(document.getElementById('profileMainAvatar'), currentUser.avatarUrl, firstLetter);
+      const removeButton = document.getElementById('profileAvatarRemove');
+      removeButton.disabled = !currentUser.avatarPath;
+      removeButton.title = currentUser.avatarPath ? '' : 'There is no uploaded profile picture to remove.';
       document.getElementById('profileAvatarInput').value = '';
       document.getElementById('profileSuccess').hidden = true;
       document.getElementById('profileError').classList.remove('show');
@@ -1725,9 +1737,21 @@
     document.getElementById('profileAvatarInput').addEventListener('change', event => {
       const file = event.target.files?.[0];
       if (!file) return;
-      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+      const allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+      const typeIsSupported = allowedTypes.includes(file.type)
+        || (!file.type || file.type === 'application/octet-stream') && allowedExtensions.includes(extension);
+      if (!typeIsSupported) {
         const errorEl = document.getElementById('profileError');
-        errorEl.textContent = 'Choose a PNG, JPEG, or WebP image smaller than 5 MB.';
+        errorEl.textContent = 'Unsupported image format. Choose a JPG, JPEG, PNG, or WebP image.';
+        errorEl.classList.add('show');
+        event.target.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        const errorEl = document.getElementById('profileError');
+        errorEl.textContent = 'The image is too large. Choose an image no larger than 5 MB.';
         errorEl.classList.add('show');
         event.target.value = '';
         return;
@@ -1872,6 +1896,9 @@
       applyButton.disabled = true;
       try {
         const blob = await createCroppedAvatar();
+        if (blob.size > 5 * 1024 * 1024) {
+          throw new Error('The prepared image is too large to upload. Choose a smaller image and try again.');
+        }
         const file = new File([blob], 'profile-picture.png', { type: blob.type });
         if (activeAvatarObjectUrl) URL.revokeObjectURL(activeAvatarObjectUrl);
         activeAvatarFile = file;
@@ -1898,6 +1925,7 @@
       const errorEl = document.getElementById('profileError');
       const successEl = document.getElementById('profileSuccess');
       const saveButton = document.querySelector('#profileForm button[type="submit"]');
+      const removeButton = document.getElementById('profileAvatarRemove');
       const firstName = document.getElementById('profileFirstName').value.trim();
       const lastName = document.getElementById('profileLastName').value.trim();
       const email = document.getElementById('profileEmail').value.trim();
@@ -1914,7 +1942,13 @@
       }
 
       saveButton.disabled = true;
-      saveButton.textContent = 'Saving…';
+      removeButton.disabled = true;
+      saveButton.textContent = activeAvatarFile ? 'Uploading…' : 'Saving…';
+      let uploadedPath = null;
+      let uploadReturnedPath = null;
+      let uploadCompleted = false;
+      let profileUpdated = false;
+      let cleanupUploadedAvatar = true;
       try {
         const client = await window.spotibaiSupabaseReady;
         const authUserResult = await client.auth.getUser();
@@ -1925,23 +1959,109 @@
         }
 
         const updates = { first_name: firstName, last_name: lastName, phone: phone };
+        const previousAvatarPath = currentUser.avatarPath;
         if (activeAvatarFile) {
-          const extension = activeAvatarFile.type.split('/')[1].replace('jpeg', 'jpg');
-          const uploadedPath = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
+          if (activeAvatarFile.size > 5 * 1024 * 1024) {
+            throw new Error('The image is too large. Choose an image no larger than 5 MB.');
+          }
+          uploadedPath = `${authUser.id}/${crypto.randomUUID()}.png`;
+          console.info('Uploading profile picture to Supabase Storage.', {
+            bucket: 'avatars',
+            destinationPath: uploadedPath,
+            contentType: 'image/png',
+            sizeBytes: activeAvatarFile.size
+          });
           const upload = await client.storage.from('avatars').upload(uploadedPath, activeAvatarFile, {
-            contentType: activeAvatarFile.type,
+            contentType: 'image/png',
             upsert: false
           });
-          if (upload.error) throw upload.error;
-          updates.avatar_path = uploadedPath;
+          if (upload.error) {
+            console.error('Profile picture upload failed.', {
+              bucket: 'avatars',
+              destinationPath: uploadedPath,
+              code: upload.error.error || upload.error.statusCode || upload.error.name,
+              message: upload.error.message,
+              statusCode: upload.error.statusCode
+            });
+            throw upload.error;
+          }
+          uploadCompleted = true;
+          uploadReturnedPath = upload.data?.path || null;
+          console.info('Profile picture upload completed.', {
+            bucket: 'avatars',
+            destinationPath: uploadedPath,
+            returnedPath: uploadReturnedPath
+          });
+          updates.avatar_path = uploadReturnedPath || uploadedPath;
+          uploadedPath = updates.avatar_path;
         }
 
         const profileResult = await client.from('profiles')
           .update(updates)
           .eq('id', authUser.id)
           .select('id,email,first_name,last_name,phone,role,account_status,permissions,avatar_path')
-          .single();
+          .maybeSingle();
+        console.info('Profile update response.', {
+          userId: authUser.id,
+          returnedProfile: profileResult.data
+            ? {
+                id: profileResult.data.id,
+                avatarPath: profileResult.data.avatar_path,
+                updatedFields: Object.keys(updates)
+              }
+            : null,
+          errorCode: profileResult.error?.code || null,
+          errorMessage: profileResult.error?.message || null,
+          errorDetails: profileResult.error?.details || null,
+          errorHint: profileResult.error?.hint || null
+        });
         if (profileResult.error) throw profileResult.error;
+
+        let refreshedProfileRow = profileResult.data;
+        if (!refreshedProfileRow) {
+          console.error('Profile update returned no row; checking the authenticated profile reference.', {
+            userId: authUser.id,
+            destinationPath: uploadedPath
+          });
+          const fallbackResult = await client.from('profiles')
+            .select('id,email,first_name,last_name,phone,role,account_status,permissions,avatar_path')
+            .eq('id', authUser.id)
+            .maybeSingle();
+          if (fallbackResult.error) {
+            console.error('Unable to verify the profile after an update returned no row.', {
+              code: fallbackResult.error.code,
+              message: fallbackResult.error.message,
+              details: fallbackResult.error.details,
+              hint: fallbackResult.error.hint
+            });
+            throw fallbackResult.error;
+          }
+          refreshedProfileRow = fallbackResult.data;
+        }
+
+        if (!refreshedProfileRow) {
+          cleanupUploadedAvatar = true;
+          throw new Error('No profile record was returned for your signed-in account. The profile update did not return a saved row.');
+        }
+        if (uploadedPath) cleanupUploadedAvatar = refreshedProfileRow.avatar_path !== uploadedPath;
+        const normalizeProfileValue = value => String(value ?? '').trim();
+        const fieldsNotSaved = Object.entries(updates)
+          .filter(([column, value]) => normalizeProfileValue(refreshedProfileRow[column]) !== normalizeProfileValue(value))
+          .map(([column]) => column === 'avatar_path' ? 'profile picture' : column.replace('_', ' '));
+        if (fieldsNotSaved.length) {
+          console.error('Profile update did not persist all requested fields.', {
+            userId: authUser.id,
+            destinationPath: uploadedPath,
+            uploadReturnedPath,
+            updateReturnedRow: Boolean(profileResult.data),
+            fieldsNotSaved,
+            expectedAvatarPath: uploadedPath,
+            savedAvatarPath: refreshedProfileRow.avatar_path,
+            savedProfileId: refreshedProfileRow.id
+          });
+          throw new Error(`These profile changes were not saved: ${fieldsNotSaved.join(', ')}.`);
+        }
+        profileUpdated = true;
 
         let emailChangeError = '';
         let emailChangeMessage = '';
@@ -1967,12 +2087,7 @@
           }
         }
 
-        const refreshedProfileResult = await client.from('profiles')
-          .select('id,email,first_name,last_name,phone,role,account_status,permissions,avatar_path')
-          .eq('id', authUser.id)
-          .single();
-        if (refreshedProfileResult.error) throw refreshedProfileResult.error;
-        const refreshedProfile = profileFromDatabase(refreshedProfileResult.data);
+        const refreshedProfile = profileFromDatabase(refreshedProfileRow);
         refreshedProfile.email = verifiedEmail;
         currentUser = {
           ...currentUser,
@@ -1980,6 +2095,16 @@
           name: `${refreshedProfile.firstName} ${refreshedProfile.lastName}`.trim() || verifiedEmail.split('@')[0],
           avatarUrl: await refreshProfileAvatar(client, refreshedProfile.avatarPath)
         };
+        if (uploadedPath && previousAvatarPath && previousAvatarPath !== uploadedPath
+            && isOwnedAvatarPath(previousAvatarPath, authUser.id)) {
+          try {
+            const { error: oldAvatarError } = await client.storage.from('avatars').remove([previousAvatarPath]);
+            if (oldAvatarError) throw oldAvatarError;
+          } catch (oldAvatarError) {
+            console.error('Profile picture changed, but the previous stored picture could not be removed.', oldAvatarError);
+            showBackendStatus('Profile picture updated, but the previous image could not be removed from storage.', 'error');
+          }
+        }
         upsertUser(refreshedProfile);
         discardPendingAvatar();
         updateUserInfo();
@@ -1996,11 +2121,117 @@
         renderDashboardHome();
       } catch (error) {
         console.error('Unable to update the authenticated profile.', error);
-        errorEl.textContent = error.message || 'Unable to save profile changes.';
+        let cleanupMessage = '';
+        if (uploadedPath && uploadCompleted && !profileUpdated && cleanupUploadedAvatar) {
+          try {
+            const client = await window.spotibaiSupabaseReady;
+            const { error: cleanupError } = await client.storage.from('avatars').remove([uploadedPath]);
+            if (cleanupError) {
+              console.error('Unable to remove the unreferenced profile picture after the profile update failed.', cleanupError);
+              cleanupMessage = ' The uploaded image could not be cleaned up from storage.';
+            }
+          } catch (cleanupError) {
+            console.error('Unable to clean up the unreferenced profile picture.', cleanupError);
+            cleanupMessage = ' The uploaded image could not be cleaned up from storage.';
+          }
+        }
+        errorEl.textContent = `${error.message || 'Unable to save profile changes.'}${cleanupMessage}`;
         errorEl.classList.add('show');
       } finally {
         saveButton.disabled = false;
         saveButton.textContent = 'Save Changes';
+        removeButton.disabled = !currentUser.avatarPath;
+      }
+    }
+
+    function isOwnedAvatarPath(path, userId) {
+      return typeof path === 'string' && path.startsWith(`${userId}/`) && path.length > userId.length + 1;
+    }
+
+    async function removeProfilePicture() {
+      const errorEl = document.getElementById('profileError');
+      const successEl = document.getElementById('profileSuccess');
+      const removeButton = document.getElementById('profileAvatarRemove');
+      const saveButton = document.querySelector('#profileForm button[type="submit"]');
+      if (!currentUser || !currentUser.avatarPath || removeButton.disabled) return;
+      if (!window.confirm('Remove your profile picture and restore the default avatar?')) return;
+
+      errorEl.classList.remove('show');
+      errorEl.textContent = '';
+      successEl.hidden = true;
+      removeButton.disabled = true;
+      saveButton.disabled = true;
+      removeButton.textContent = 'Removing…';
+      let profileUpdated = false;
+      try {
+        const client = await window.spotibaiSupabaseReady;
+        const authUserResult = await client.auth.getUser();
+        if (authUserResult.error) throw authUserResult.error;
+        const authUser = authUserResult.data.user;
+        if (!authUser || authUser.id !== currentUser.id) {
+          throw new Error('Your authenticated account could not be verified. Sign in again and retry.');
+        }
+
+        const { data: existingProfile, error: existingProfileError } = await client.from('profiles')
+          .select('id,avatar_path')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (existingProfileError) throw existingProfileError;
+        if (!existingProfile) throw new Error('Your profile was not found. Refresh and try again.');
+
+        let profileUpdate = client.from('profiles')
+          .update({ avatar_path: null })
+          .eq('id', authUser.id);
+        profileUpdate = existingProfile.avatar_path
+          ? profileUpdate.eq('avatar_path', existingProfile.avatar_path)
+          : profileUpdate.is('avatar_path', null);
+        const { data: updatedProfile, error: profileError } = await profileUpdate
+          .select('id,email,first_name,last_name,phone,role,account_status,permissions,avatar_path')
+          .maybeSingle();
+        if (profileError) throw profileError;
+        if (!updatedProfile) {
+          throw new Error('Your profile picture changed before it could be removed. Refresh and try again.');
+        }
+        profileUpdated = true;
+
+        const refreshedProfile = profileFromDatabase(updatedProfile);
+        currentUser = {
+          ...currentUser,
+          ...refreshedProfile,
+          name: `${refreshedProfile.firstName} ${refreshedProfile.lastName}`.trim() || currentUser.email.split('@')[0],
+          avatarUrl: ''
+        };
+        discardPendingAvatar();
+        upsertUser(refreshedProfile);
+        updateUserInfo();
+        applyAvatar(
+          document.getElementById('profileMainAvatar'),
+          '',
+          (currentUser.firstName || 'U').charAt(0).toUpperCase()
+        );
+        renderDashboardHome();
+
+        if (isOwnedAvatarPath(existingProfile.avatar_path, authUser.id)) {
+          const { error: storageError } = await client.storage.from('avatars').remove([existingProfile.avatar_path]);
+          if (storageError) {
+            console.error('Profile picture reference removed, but the stored image could not be deleted.', storageError);
+            throw new Error('Your default avatar is restored, but the stored image could not be deleted. Contact an administrator.');
+          }
+        }
+        successEl.textContent = 'Profile picture removed. The default avatar has been restored.';
+        successEl.hidden = false;
+      } catch (error) {
+        console.error('Unable to remove the profile picture.', error);
+        errorEl.textContent = error.message || 'Unable to remove the profile picture.';
+        errorEl.classList.add('show');
+        if (profileUpdated) {
+          successEl.textContent = 'Your default avatar is restored.';
+          successEl.hidden = false;
+        }
+      } finally {
+        removeButton.disabled = !currentUser?.avatarPath;
+        removeButton.textContent = 'Remove Image';
+        saveButton.disabled = false;
       }
     }
 
@@ -4514,8 +4745,8 @@
     let umRightsDraft = null;
 
     function canManageUserAccount(user) {
-      if (!currentUser || !user) return false;
-      if (currentUser.role === 'superadmin') return user.id !== currentUser.id;
+      if (!currentUser || !user || user.id === currentUser.id) return false;
+      if (currentUser.role === 'superadmin') return user.role !== 'superadmin';
       return currentUser.role === 'admin' && user.role === 'user';
     }
 
@@ -4552,11 +4783,16 @@
       let rows = list.length === 0
         ? '<tr><td colspan="6"><div class="empty-state">No users.</div></td></tr>'
         : list.map(u => {
-            const isSelf = u.email.toLowerCase() === currentUser.email.toLowerCase();
+            const isSelf = u.id === currentUser.id;
             const isDisapproved = u.status === 'disapproved';
             let actions = '';
             const canManageAccount = canManageUserAccount(u);
             const canEditUser = canManageAccount || (isSuper && isSelf);
+            if (isSuper && u.role === 'superadmin' && !isSelf) {
+              actions = '<span title="Super Admin accounts cannot be managed by another Super Admin.">Protected account</span>';
+            } else if (currentUser.role === 'admin' && u.role === 'admin') {
+              actions = '<span title="Admins cannot modify another Admin account.">Protected account</span>';
+            }
             if (u.status === 'pending' && canManageAccount) {
               actions += `<button class="btn-restore" onclick="umApprove('${u.id}')">Approve</button>`;
               actions += `<button class="btn-del" onclick="umDisapprove('${u.id}')">Disapprove</button>`;
@@ -4595,7 +4831,7 @@
         <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
           ${isSuper
             ? 'Superadmin: manage Admin and User accounts. Superadmin accounts cannot be managed by other Superadmins.'
-            : 'Admin: manage Users only. Superadmin accounts are hidden and cannot be modified.'}
+            : 'Admin: manage Users only. Admin authority and Superadmin accounts cannot be modified.'}
         </p>
         <div class="data-table-wrap">
           <table class="data-table user-management-table">
